@@ -134,8 +134,6 @@ var resultset = {
             t.confidence_strength = that.adjectives[test_res[0].p];
             t.worse_than = test_res[0];
             t.worse_than_name = test_res[0].vs;
-//            worst.push("We are <strong>" +  + "</strong> that group " + row.attr('name') + 
-//                                " performs <strong>worse</strong> than group " + test_res[0].vs + ".");
         });
         if (worst.length) {
             result['conclusion'] = "There's no clear winner between the segments, but there are some clear losers:";
@@ -151,28 +149,3 @@ var resultset = {
         result.winners[0].better_than = 'all';
     }
 };
-
-// var next_group = function(current) {
-//     var groups = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
-//     var inc = function(letter, num) {
-//         var next = groups[(groups.indexOf(letter) + 1) % groups.length];
-//         if (next == groups[0]) {
-//             num++;
-//         }
-//         return next + (num ? num : '');
-//     };
-//     current = current.split('');
-//     var letter = current[0];
-//     var num = parseInt(current.slice(1), 10) || 0;
-//     return inc(letter, num);
-// };
-
-// if (!Array.indexOf) {
-//     Array.prototype.indexOf = function(obj){
-//         for(var i=0; i<this.length; i++){
-//             if(this[i]==obj){
-//                 return i;
-//             }
-//         }
-//     };
-// }
