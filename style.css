@@ -1,0 +1,103 @@
+.mixpanel-platform-section > h1, .mixpanel-platform-section > div > h1 {
+  font-size: 20px;
+  margin: 10px 10px 20px;
+  font-weight: 500;
+  color: #5c617b;
+  text-align: center;
+}
+.section-label {
+  width: 200px;
+  float: left;
+  border: none;
+  background: transparent;
+  text-align: right;
+  font-size: 13px;
+  color: #a4afc2;
+  font-weight: 500;
+}
+.config-section {
+  background-color: white;
+  border: 1px solid #c4c9d8;
+}
+.config-section .mixpanel-platform-input, .config-section .section-label {
+  margin: 10px 15px 10px 0;
+}
+.config-section input[type='text'] {
+  width: 600px;
+  height: 30px;
+  font-family: proxima-nova,sans-serif;
+  color: #747d94;
+  font-size: 13px;
+  padding: 0 8px;
+  box-shadow: 0 1px rgba(0,0,0,0.05);
+  border: 1px solid #cbcfd9;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+.interval-select {
+  width: 100px!important;
+  min-width: 100px!important;
+}
+.interval-select .select_button {
+  min-width: auto!important;
+}
+.interval-select .select_menu {
+  width: 98px!important;
+  min-width: 98px!important;
+}
+.zero_bucket {
+  background-color: #436ea4;
+  color: white;
+  border-right-color: #436ea4!important;
+}
+.data_heat_5 {
+  background-color: #4c7cb8;
+  color: white;
+  border-right-color: #4c7cb8!important;
+}
+.data_heat_4 {
+  background-color: #2b93d5;
+  color: white;
+  border-right-color: #2b93d5!important;
+}
+.data_heat_3 {
+  background-color: #62afe9;
+  color: white;
+  border-right-color: #62afe9!important;
+}
+.data_heat_2 {
+  background-color: #97c8eb;
+  color: white;
+  border-right-color: #97c8eb!important;
+}
+.data_heat_1 {
+  background-color: #b7d7f1;
+  color: #747d94;
+  border-right-color: #b7d7f1!important;
+}
+.empty {
+  border-color: transparent!important;
+  background-color: white!important;
+}
+#table-summary .mp_chart_row:not(.mp_chart_header) {
+  height: 25px;
+}
+#table-summary .mp_chart_row:not(.mp_chart_header) .mp_chart_cell {
+  padding: 5px 13px;
+}
+#analysis {
+  font-family: 'proxima nova', helvetica;
+  color: #9fa6b5;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 10px 10px 20px;
+  text-align: center;
+}
+#analysis h2, #analysis strong {
+  color: #4d6071;
+  font-weight: 700;
+  font-size: 14px;
+}
+#summaryChart {
+  margin-top: 15px;
+}
