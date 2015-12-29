@@ -649,7 +649,7 @@ var segmentAnalytics = function() {
   analytics.page('', 'Index', {url: location.href.replace(/api_secret=[^&]*/, '')})
   analytics.ready(function(){
     if (!window.analytics.user().traits().createdAt) {
-      analytics.identify(window.analytics.user().anonymousId(), {createdAt: moment().format('YYY-MM-DD HH:mm:ss')});
+      window.analytics.identify(window.analytics.user().anonymousId(), {createdAt: moment().format('YYY-MM-DD HH:mm:ss')});
     }
   });
   }}();
