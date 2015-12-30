@@ -75,9 +75,17 @@
   color: #747d94;
   border-right-color: #b7d7f1!important;
 }
+.data_zero {
+  border-top: 1px solid #d8dde6;
+  margin-top: -1px;
+  color: #868ea3;
+}
 .empty {
   border-color: transparent!important;
   background-color: white!important;
+}
+.mixpanel-platform-chart-table .mp_chart_row .mp_chart_cell:last-child {
+    border-right: 1px solid #d8dde6;
 }
 #table-summary .mp_chart_row:not(.mp_chart_header) {
   height: 25px;
@@ -100,4 +108,16 @@
 }
 #summaryChart {
   margin-top: 15px;
+}
+footer {
+  text-align: center;
+  color: #666;
+}
+footer em {
+  font-style: italic;
+}
+footer a {
+  color: inherit!important;
+  text-decoration: none;
+  border-bottom: 1px dotted #868ea3;
 }

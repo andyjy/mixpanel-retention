@@ -348,8 +348,9 @@ var populateTable = function(table, source_data, format_percent, total_label, ze
   // deep copy to prevent changes returning up the stack
   var data = $.extend(true, {}, source_data);
 
-  var max_v2 = 0, min_v2 = 100, first_key = Object.keys(data)[0];
+  var max_v2 = 0, min_v2 = 100, first_key, thunderbirds_are_go = false;
   for (k in data) {
+    if (!first_key) { first_key = k; }
     for (k2 in data[k]) {
       // formatting
       if (data[k][k2] !== '') {
@@ -362,6 +363,8 @@ var populateTable = function(table, source_data, format_percent, total_label, ze
           if (interval && (k > moment().subtract(Number.parseInt(k2) + 2, interval).format("YYYY-MM-DD"))) {
             data[k][k2] = data[k][k2] + '…';
           }
+        } else if (data[k]['total'] == 0 && k2 != 'total' && data[k][k2] == 0) {
+          data[k][k2] = '';
         } else {
           data[k][k2] = numberWithCommas(data[k][k2]);
         }
@@ -415,8 +418,10 @@ var populateTable = function(table, source_data, format_percent, total_label, ze
         $(c).addClass('data_heat_3');
       } else if (v > max_v2 - heat_interval*4) {
         $(c).addClass('data_heat_2');
-      } else {
+      } else if (v > 0) {
         $(c).addClass('data_heat_1');
+      } else {
+        $(c).addClass('data_zero');
       }
     });
   table.find('.mp_chart_row:not(.mp_chart_header) .mp_chart_cell:not(:first-child):not(:nth-child(2)):has(.content:empty())').addClass('empty');
@@ -539,19 +544,30 @@ var displayResults = function(data, interval) {
     .object()
     .value();
 
+  var trimTrailingEmptyRows = function(data) {
+    var data = $.extend({}, data);
+    for (k in data) {
+      if ((data[k]['total'] != 0) || (data[k][0] != 0)) {
+        break;
+      }
+      delete data[k];
+    }
+    return data;
+  }
+
   var results_percent = calculatePercent(results);
-  populateTable(table, results_percent, true, COL_PEOPLE, '  < 1 ' + interval, interval);
+  populateTable(table, trimTrailingEmptyRows(results_percent), true, COL_PEOPLE, '  < 1 ' + interval, interval);
 
   if (interval == 'day') {
     var results_rolling = rollingAverage(results, 7);
     $('#rolling-averages').show();
     var results_rolling_percent = calculatePercent(results_rolling);
-    populateTable(table_rolling, results_rolling_percent, true, COL_PEOPLE, '  < 1 ' + interval, interval);
+    populateTable(table_rolling, trimTrailingEmptyRows(results_rolling_percent), true, COL_PEOPLE, '  < 1 ' + interval, interval);
   } else if (interval == 'week') {
     var results_rolling = rollingAverage(results, 4);
     $('#rolling-averages').show();
     var results_rolling_percent = calculatePercent(results_rolling);
-    populateTable(table_rolling, results_rolling_percent, true, COL_PEOPLE, '  < 1 ' + interval, interval);
+    populateTable(table_rolling, trimTrailingEmptyRows(results_rolling_percent), true, COL_PEOPLE, '  < 1 ' + interval, interval);
   } else {
     $('#rolling-averages').hide();
   }
@@ -646,19 +662,10 @@ var segmentAnalytics = function() {
     analytics.load("KHc3WYdCg1Gq1Cyz96jcze267x7K0DVC");
     analytics.identify({'Mixpanel Key': MP.api.apiKey});
     analytics.group(MP.api.apiKey);
-    analytics.track('Viewed Index Page', {
-      name: 'Index',
-      path: window.location.pathname,
-      referrer: document.referrer,
-      search: window.location.search.replace(/api_secret=[^&]*/, ''),
-      title: document.title,
-      url: window.location.href.replace(/api_secret=[^&]*/, '')
-    });
-    console.log('analytics setup');
+    analytics.page('', 'Index', {url: location.href.replace(/api_secret=[^&]*/, ''), search: location.search.replace(/api_secret=[^&]*/, '')});
     analytics.ready(function() {
-      console.log('analytics ready');
       if (!window.analytics.user().traits().createdAt) {
-        console.log('setting createdAt and identifying with anonymousId');
+        window.analytics.alias(window.analytics.user().anonymousId());
         window.analytics.identify(window.analytics.user().anonymousId(), {createdAt: moment().format('YYYY-MM-DD HH:mm:ss')});
       }
     });
@@ -735,6 +742,15 @@ $('body').append('\
     </div>\
   </div>\
 </div>\
+<footer>\
+  <p>☞ &nbsp; Custom report for Mixpanel retention analysis and A/B testing &nbsp; ☜<br>\
+  © Andy Young, <a href="http://500.co" target="_blank">500 Startups</a> Distro Team ~ <a href="https://twitter.com/andyy" target="_blank">@andyy</a></p>\
+  <p><em>' + (Math.random() > 0.5 ?
+  '“They\'re not anecdotes - that\'s small batch artisanal data.” ~ <a href="https://twitter.com/pikelet/status/570061993949818881" target="_blank">@pikelet</a>'
+  : (Math.random() > 0.5 ? '“The temptation to form premature theories upon insufficient data is the bane of our profession.” ~ Sherlock Holmes'
+  : '“If we have data, let\'s look at data. If all we have are opinions, let\'s go with mine.” ~ Jim Barksdale')) + '</em></p>'
+  + '<img src="//500.co/wp-content/uploads/2015/01/500-black.png">\
+</footer>\
 <script src="https://andyyoung.github.io/mixpanel-retention/calculator.js"></script>\
 ');
 
