@@ -643,15 +643,25 @@ var displaySegmentedResults = function(data, interval) {
 
 var segmentAnalytics = function() {
   !function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","page","once","off","on"];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement("script");e.type="text/javascript";e.async=!0;e.src=("https:"===document.location.protocol?"https://":"http://")+"cdn.segment.com/analytics.js/v1/"+t+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION="3.1.0";
-  analytics.load("KHc3WYdCg1Gq1Cyz96jcze267x7K0DVC");
-  analytics.identify({'Mixpanel Key': MP.api.apiKey});
-  analytics.group(MP.api.apiKey);
-  analytics.page('', 'Index', {url: location.href.replace(/api_secret=[^&]*/, '')})
-  analytics.ready(function(){
-    if (!window.analytics.user().traits().createdAt) {
-      window.analytics.identify(window.analytics.user().anonymousId(), {createdAt: moment().format('YYYY-MM-DD HH:mm:ss')});
-    }
-  });
+    analytics.load("KHc3WYdCg1Gq1Cyz96jcze267x7K0DVC");
+    analytics.identify({'Mixpanel Key': MP.api.apiKey});
+    analytics.group(MP.api.apiKey);
+    analytics.track('Viewed Index Page', {
+      name: 'Index',
+      path: window.location.pathname,
+      referrer: document.referrer,
+      search: window.location.search.replace(/api_secret=[^&]*/, ''),
+      title: document.title,
+      url: window.location.href.replace(/api_secret=[^&]*/, '')
+    });
+    console.log('analytics setup');
+    analytics.ready(function() {
+      console.log('analytics ready');
+      if (!window.analytics.user().traits().createdAt) {
+        console.log('setting createdAt and identifying with anonymousId');
+        window.analytics.identify(window.analytics.user().anonymousId(), {createdAt: moment().format('YYYY-MM-DD HH:mm:ss')});
+      }
+    });
   }}();
 }
 
@@ -725,6 +735,7 @@ $('body').append('\
     </div>\
   </div>\
 </div>\
+<script src="https://andyyoung.github.io/mixpanel-retention/calculator.js"></script>\
 ');
 
 $(init);
