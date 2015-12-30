@@ -749,7 +749,7 @@ $('body').append('\
   '“They\'re not anecdotes - that\'s small batch artisanal data.” ~ <a href="https://twitter.com/pikelet/status/570061993949818881" target="_blank">@pikelet</a>'
   : (Math.random() > 0.5 ? '“The temptation to form premature theories upon insufficient data is the bane of our profession.” ~ Sherlock Holmes'
   : '“If we have data, let\'s look at data. If all we have are opinions, let\'s go with mine.” ~ Jim Barksdale')) + '</em></p>'
-  + '<img src="//500.co/wp-content/uploads/2015/01/500-black.png">\
+  + '<img src="https://andyyoung.github.io/mixpanel-retention/500-black.png">\
 </footer>\
 <script src="https://andyyoung.github.io/mixpanel-retention/calculator.js"></script>\
 ');
