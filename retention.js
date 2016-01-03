@@ -666,7 +666,7 @@ var segmentAnalytics = function() {
     analytics.ready(function() {
       if (!window.analytics.user().traits().createdAt) {
         window.analytics.alias(window.analytics.user().anonymousId());
-        window.analytics.identify(window.analytics.user().anonymousId(), {createdAt: moment().format('YYYY-MM-DD HH:mm:ss')});
+        window.analytics.identify(window.analytics.user().anonymousId(), {'Mixpanel Key': MP.api.apiKey, createdAt: moment().format('YYYY-MM-DD HH:mm:ss')});
       }
     });
   }}();
