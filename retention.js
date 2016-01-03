@@ -29,7 +29,7 @@ var init = function() {
   summaryChart = $('#summaryChart').MPChart({chartType: 'line', yLabel: '% users returned', data:{}});
   table = $('#table').MPTable({firstColHeader: 'Cohort', data:{}});
   table_rolling = $('#table_rolling').MPTable({firstColHeader: 'Cohort', data:{}});
-  table_summary = $('#table-summary').MPTable();
+  table_summary = $('#table-summary').MPTable({firstColHeader: 'Segment'});
   dateSelect.val(dateRange);
 
   $.when(customEvents(), MP.api.topEvents({type:'general', limit: 100})).done(function(custom_events, events) {
@@ -209,12 +209,12 @@ var runQuery = function() {
         segmentExpr ? retentionResults['day'] : [null],
         function(segment) {
           var k1 = (segment ? segment + ': ' : '') + 'Population',
-            k2 = segment ? segment : dateRange.from.toDateString() + ' - ' + dateRange.to.toDateString();
+            k2 = segment ? ' ' + segment : dateRange.from.toDateString() + ' - ' + dateRange.to.toDateString();
           summary[k1] = {}; summary[k2] = {};
           $.each([
-              ['day', {total:'', ' Day  1':1, ' Day  3':3, ' Day  7':7, ' Day 14':14, ' Day 28':28, ' Day 60':60, ' Day 90':90}],
-              ['week', {' Week 1':1, ' Week 2':2, ' Week 3':3, ' Week 4':4}],
-              ['month', {'Month 1':1, 'Month 2':2}]
+              ['day', {'  < 1 Day':0, '  Day  1':1, '  Day  3':3, '  Day  7':7, '  Day 14':14, '  Day 28':28, '  Day 60':60, '  Day 90':90}],
+              ['week', {' < 1 Week':0, ' Week 1':1, ' Week 2':2, ' Week 3':3, ' Week 4':4}],
+              ['month', {'< 1 Month':0, 'Month 1':1, 'Month 2':2}]
             ],
             function(i, v) {
               if (summaryResults[v[0]] == undefined) {
@@ -354,7 +354,7 @@ var populateTable = function(table, source_data, format_percent, total_label, ze
     for (k2 in data[k]) {
       // formatting
       if (data[k][k2] !== '') {
-        if ((k2 != 'total') && (k != 'total') && (data[k]['total'] != '') && (data[k][total_label] != '')) {
+        if ((k2 != 'total') && (k != 'total') && (data[k]['total'] != '') && (data[k][total_label] != '') && (k != 'Population') && (k.indexOf(": Population") == -1)) {
           if (format_percent) {
             data[k][k2] = data[k][k2] + "%";
           } else {
