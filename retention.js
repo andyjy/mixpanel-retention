@@ -209,7 +209,7 @@ var runQuery = function() {
         segmentExpr ? retentionResults['day'] : [null],
         function(segment) {
           var k1 = (segment ? segment + ': ' : '') + 'Population',
-            k2 = segment ? ' ' + segment : dateRange.from.toDateString() + ' - ' + dateRange.to.toDateString();
+            k2 = segment ? '  ↳ ' + segment : dateRange.from.toDateString() + ' - ' + dateRange.to.toDateString();
           summary[k1] = {}; summary[k2] = {};
           $.each([
               ['day', {'  < 1 Day':0, '  Day  1':1, '  Day  3':3, '  Day  7':7, '  Day 14':14, '  Day 28':28, '  Day 60':60, '  Day 90':90}],
@@ -235,7 +235,7 @@ var runQuery = function() {
                 }
               }
               if (v[0] == 'day') {
-                summaryChartData[k2] = overallAverage(
+                summaryChartData[segment ? segment : dateRange.from.toDateString() + ' - ' + dateRange.to.toDateString()] = overallAverage(
                   segment ? retentionResults[v[0]][segment] : retentionResults[v[0]],
                   $.map(_.range(0, 31), function(e) {return e.toString()}),
                   maxDates(v[0], $.map(_.range(0, 31), function(e) {return e.toString()}))
@@ -346,7 +346,8 @@ var calculatePercent = function(source_data) {
 
 var populateTable = function(table, source_data, format_percent, total_label, zero_label, interval) {
   // deep copy to prevent changes returning up the stack
-  var data = $.extend(true, {}, source_data);
+  var data = $.extend(true, {}, source_data),
+    has_total_col = false;
 
   var max_v2 = 0, min_v2 = 100, first_key, thunderbirds_are_go = false;
   for (k in data) {
@@ -369,9 +370,9 @@ var populateTable = function(table, source_data, format_percent, total_label, ze
           data[k][k2] = numberWithCommas(data[k][k2]);
         }
       }
-      v2 = Number.parseFloat(data[k][k2]) | 0;
-      if (!_.contains(['total', '0'], k2)) {
-        if (k !== 'total' && (data[k]['total'] != '') && (data[k][total_label] != '')) {
+      v2 = Number.parseFloat(data[k][k2]) || 0;
+      if (!_.contains(['total', '0'], k2) && (k2.indexOf("<") == -1)) {
+        if (k !== 'total' && (data[k]['total'] != '') && (data[k][total_label] != '') && (k != 'Population') && (k.indexOf(": Population") == -1)) {
           // calculate min + max range for values for column 3 onwards (exclude totals + zero-interval)
           max_v2 = Math.max(max_v2, v2);
           min_v2 = Math.min(min_v2, v2);
@@ -383,9 +384,12 @@ var populateTable = function(table, source_data, format_percent, total_label, ze
           delete data[k][k2_old];
         }
       }
-      if (k2 == 'total' && total_label && (total_label != k2)) {
-        data[k][total_label] = data[k][k2];
-        delete data[k][k2];
+      if (k2 == 'total') {
+        has_total_col = true;
+        if (total_label && (total_label != k2)) {
+          data[k][total_label] = data[k][k2];
+          delete data[k][k2];
+        }
       }
       if (k2 == '0' && zero_label && (zero_label != k2)) {
         data[k][zero_label] = data[k][k2];
@@ -406,11 +410,12 @@ var populateTable = function(table, source_data, format_percent, total_label, ze
 
   // add formatting
   var heat_interval = (max_v2 - min_v2) / 5;
-  table.find('.mp_chart_row:not(.mp_chart_header):not(:has(:nth-child(2) .content:empty)) .mp_chart_cell:nth-child(3)').addClass('zero_bucket');
-  table.find('.mp_chart_row:not(.mp_chart_header):not(:has(:nth-child(2) .content:empty)) .mp_chart_cell:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:has(.content:empty()))')
+  table.find('.mp_chart_row:not(.mp_chart_header):not(:has(:nth-child(2) .content:empty)):not(:has(:nth-child(1):contains("Population"))) .mp_chart_cell:not(:first-child)' + (has_total_col ? ':not(:nth-child(2))' : '') + ':not(:has(.content:empty()))')
     .each(function(i, c) {
       v = (Number.parseFloat(c.textContent));
-      if (v > max_v2 - heat_interval) {
+      if (v > max_v2) {
+        $(c).addClass('data_heat_6');
+      } else if (v > max_v2 - heat_interval) {
         $(c).addClass('data_heat_5');
       } else if (v > max_v2 - heat_interval*2) {
         $(c).addClass('data_heat_4');
@@ -424,7 +429,7 @@ var populateTable = function(table, source_data, format_percent, total_label, ze
         $(c).addClass('data_zero');
       }
     });
-  table.find('.mp_chart_row:not(.mp_chart_header) .mp_chart_cell:not(:first-child):not(:nth-child(2)):has(.content:empty())').addClass('empty');
+  table.find('.mp_chart_row:not(.mp_chart_header) .mp_chart_cell:not(:first-child)' + (has_total_col ? ':not(:nth-child(2))' : '') + ':has(.content:empty())').addClass('empty');
 }
 
 var rollingAverage = function(data, window_size, max_dates) {
@@ -443,7 +448,7 @@ var rollingAverage = function(data, window_size, max_dates) {
         history[k2] = {sum:0, values:[]};
       }
       if (v2 !== '') {
-        v2_num = Number.parseFloat(v2) | 0;
+        v2_num = Number.parseFloat(v2) || 0;
         history[k2]['values'].push(v2_num);
         history[k2].sum = history[k2].sum + v2_num;
         if (history[k2]['values'].length > window_size) {
@@ -479,7 +484,7 @@ var overallAverage = function(data, keys, max_dates) {
       }
       v2 = data[k][k2];
       if (v2 !== '') {
-        v2_num = Number.parseFloat(v2) | 0;
+        v2_num = Number.parseFloat(v2) || 0;
         history[k2].sum = history[k2].sum + v2_num;
         history[k2].length = history[k2].length + 1;
         history[k2].population = history[k2].population + data[k]['total'];
