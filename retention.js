@@ -181,7 +181,7 @@ var runQuery = function() {
       to: dateRange.to.toISOString()
     });
 
-    $('#dataSection').show();
+    $('#dataSection').show().fadeTo(200, 0.3);
     summaryChart.MPChart('setData', {});
     lineChart.MPChart('setData', {});
     table.MPTable('setData', {});
@@ -319,6 +319,8 @@ var runQuery = function() {
         $('#analysis').append('<h2>Week 1 retention</h2>');
         lookForWinner(summaryResults['week'], '1', 'week');
       }
+
+      $('#dataSection').show().fadeTo(200, 1);
     });
   }
 };
