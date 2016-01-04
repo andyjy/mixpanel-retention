@@ -7,6 +7,8 @@ var FROM_DAYS = 30;
 
 var eventSelect,
   cohortEventSelect,
+  eventSelect_initial,
+  cohortEventSelect_initial,
   intervalSelect,
   dateSelect,
   dateRange,
@@ -15,7 +17,10 @@ var eventSelect,
   table,
   table_rolling,
   table_summary,
-  retentionResults = {};
+  retentionResults = {},
+  currentState,
+  dontRunQuery,
+  dontSaveHistory;
 
 var init = function() {
   segmentAnalytics();
@@ -51,11 +56,22 @@ var init = function() {
       .value();
     all_events = $.map(all_events, function(a,b) {return {label:a, value:b}})
 
+    dontRunQuery = true;
     eventSelect = $('#eventSelect').MPSelect({items:[{label:"Anything", value:''}].concat(all_events)});
     eventSelect.on('change', runQuery);
+    if (eventSelect_initial) {
+      eventSelect.val(eventSelect_initial);
+    }
 
     cohortEventSelect = $('#cohortEventSelect').MPSelect({items:[{label:"- Please select -", value:''}].concat(all_events)});
     cohortEventSelect.on('change', runQuery);
+    if (cohortEventSelect_initial) {
+      cohortEventSelect.val(cohortEventSelect_initial);
+    }
+    dontRunQuery = false;
+    if (eventSelect_initial || cohortEventSelect_initial) {
+      runQuery();
+    }
   });
 
   dateSelect.on('change', function () {
@@ -140,6 +156,9 @@ var MPAPIRetentionFix = function (event, params, settings_or_callback) {
 };
 
 var runQuery = function() {
+  if (dontRunQuery || !eventSelect || !cohortEventSelect) {
+    return;
+  }
   var eventName = eventSelect.MPSelect('value'),
       cohortEventName = cohortEventSelect.MPSelect('value'),
       interval = intervalSelect.MPSelect('value'),
@@ -152,6 +171,15 @@ var runQuery = function() {
 
   if (cohortEventName) {
     analytics.track('Ran Query', {has_event: eventName != '', is_filtered: cohortFilter != '', is_segmented: segmentExpr != ''});
+
+    saveHistory({
+      eventName: eventName,
+      cohortEventName: cohortEventName,
+      cohortFilter: cohortFilter,
+      segmentExpr: segmentExpr,
+      from: dateRange.from.toISOString(),
+      to: dateRange.to.toISOString()
+    });
 
     $('#dataSection').show();
     summaryChart.MPChart('setData', {});
@@ -319,16 +347,12 @@ var lookForWinner = function(results, column, interval) {
   } else if (result.winners.length == 1) {
     // Single winner: highlight the best
     resultset.best(result);
-    $('#analysis').append("<p>We are <strong>" + result.winners[0].confidence_strength + " (" + result.winners[0].confidence + "%)</strong> that segment <strong>&quot;" + escapeHTML(result.winners[0].name) + "&quot;</strong> performs <strong>better</strong> than the others.</p>");
+    $('#analysis').append("<p>We are <strong>" + result.winners[0].confidence_strength + " (" + result.winners[0].confidence + "%)</strong> that segment <strong>&quot;" + _.escape(result.winners[0].name) + "&quot;</strong> performs <strong>better</strong> than the others.</p>");
     analytics.track('Segment Test Result', {column: column, interval: interval, has_winner: true, confidence: result.winners[0].confidence});
   } else {
     analytics.track('Segment Test Result', {column: column, interval: interval, has_winner: false, nothing_toreport: true});
   }
   console.log(result);
-}
-
-var escapeHTML = function(s) {
-  return String(s).replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 var calculatePercent = function(source_data) {
@@ -677,6 +701,111 @@ var segmentAnalytics = function() {
   }}();
 }
 
+var scripts_loaded = 0;
+var historyCallback = function(script_index) {
+  return function() {
+    scripts_loaded = scripts_loaded + Math.pow(2, script_index-1);
+    if (scripts_loaded == 3) {
+      // all scripts loaded
+      configureFromHistory();
+      History.Adapter.bind(window,'statechange', configureFromHistory);
+    }
+  }
+}
+
+var saveHistory = function(data) {
+  if (dontSaveHistory) {
+    return;
+  }
+  var query_number;
+  var history = Cookies.getJSON('mp_retention_history');
+  if (typeof history != 'object') {
+    history = {};
+  }
+  // trim
+  var delete_first = Object.keys(history).length - 50;
+  for (var i in history) {
+    if (delete_first < 1) {
+      break;
+    }
+    delete history[i];
+    delete_first = delete_first - 1;
+  }
+  for (var i in history) {
+    if (_.isEqual(history[i], data)) {
+      query_number = i;
+      break;
+    }
+  }
+  if (!query_number) {
+    query_number = (_.max(_.map(Object.keys(history), function(i) { return Number.parseInt(i); })) | 0) + 1;
+    history[query_number] = data;
+    Cookies.set('mp_retention_history', history);
+  }
+  currentState = query_number;
+  History.pushState({query_index: query_number}, null, getHistoryUrl(data));
+}
+
+var configureFromHistory = function() {
+  var history = Cookies.getJSON('mp_retention_history');
+  if (typeof history != 'object') {
+    history = {};
+  }
+  var data = History.getState().data;
+  if (data.query_index) {
+    var query_index = data.query_index;
+  } else {
+    var query_index = _.max(_.map(Object.keys(history), function(i) { return Number.parseInt(i); }));
+  }
+  if (query_index == currentState) {
+    return;
+  }
+  var query = history[query_index];
+  if (query) {
+    dontRunQuery = true;
+    if (eventSelect) {
+      eventSelect.val(query.eventName);
+    } else {
+      eventSelect_initial = query.eventName;
+    }
+    if (cohortEventSelect) {
+      cohortEventSelect.val(query.cohortEventName);
+    } else {
+      cohortEventSelect_initial = query.cohortEventName;
+    }
+    $('#cohortFilter').val(query.cohortFilter);
+    $('#segmentExpr').val(query.segmentExpr);
+    dateSelect.val({from: new Date(query.from), to: new Date(query.to)});
+    currentState = query_index;
+    dontRunQuery = false;
+    dontSaveHistory = true;
+    runQuery();
+    dontSaveHistory = false;
+  }
+}
+
+var getHistoryUrl = function(data) {
+  var url = '?' + $.param(data);
+  var current_query = window.location.search.substr(1).split('&');
+  for (i in current_query) {
+    if ((current_query[i].substr(0, 8) == 'api_key=') || (current_query[i].substr(0, 11) == 'api_secret=')) {
+      url = url + '&' + current_query[i];
+    }
+  }
+  return url;
+}
+
+var addScript = function(src, callback) {
+  var s = document.createElement('script');
+  s.setAttribute('src', src);
+  s.onload=callback;
+  document.body.appendChild(s);
+}
+var script_base = "https://andyyoung.github.io/mixpanel-retention/";
+addScript(script_base + "jquery.history.js", historyCallback(1));
+addScript(script_base + "js.cookie.js", historyCallback(2));
+addScript(script_base + "calculator.js");
+
 //
 // html
 //
@@ -756,7 +885,6 @@ $('body').append('\
   : '“If we have data, let\'s look at data. If all we have are opinions, let\'s go with mine.” ~ Jim Barksdale')) + '</em></p>'
   + '<img src="https://andyyoung.github.io/mixpanel-retention/500-black.png">\
 </footer>\
-<script src="https://andyyoung.github.io/mixpanel-retention/calculator.js"></script>\
 ');
 
 $(init);
